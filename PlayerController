@@ -1,0 +1,101 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
+ 
+//플레이어 움직임
+//아이템 3개을 드랍과 동시에 사라지고, 카운트 출
+//도착지점까지 도착 시 클리어씬
+//다 못먹을 시 다시 돌아가세용!
+ 
+ //8.7버섯 제거카운터, Clear 조건미달 시 text출력,백그라운드/클리어 사운드
+public class PlayerController : MonoBehaviour
+{
+    Rigidbody2D rb2D;
+    Animator ani;
+    Collider col;
+    Text shroomtext,nodeletetext,reTurn;
+    Image image;
+ 
+    const float JumpForce = 700f;//점프 힘
+    const float walkForce = 50f;// 걸음 속도
+    const float maxwalkForce = 2.2f;//걸음 제한
+ 
+    public int delCount = 3;//제거카운트
+    public int maxdelCount = 3;//제거카운트제한
+ 
+    // Start is called before the first frame update
+    void Start()
+    {       
+        rb2D = FindObjectOfType<Rigidbody2D>();
+        ani = FindObjectOfType<Animator>();
+        image = GameObject.Find("DeleteSrm").GetComponent<Image>();
+        shroomtext = GameObject.Find("Destoryshroom").GetComponent<Text>();
+        nodeletetext = GameObject.Find("Nodelete").GetComponent<Text>();
+        reTurn = GameObject.Find("Return").GetComponent<Text>();
+        delCount = 3;
+        maxdelCount = 3;
+        shroomtext.text = " 제거해야 할    버섯 : "+ delCount + " / "+ maxdelCount + " 개";
+            
+    }
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        //버섯오브젝트와 충돌할 때
+        if (collision.name == "shrooms")
+        {
+            Destroy(GameObject.Find(collision.name));//즉시삭제
+            delCount--;//카운트 -1;
+            //Debug.Log(delCount);
+            //제거한 갯수 확인 안내 Text출력
+            shroomtext.text = " 제거해야 할    버섯 : " + delCount + " / " + maxdelCount + " 개";
+            //버섯3개의 그림 1/3감소(한개가 없어지게끔)
+            image.fillAmount -= 0.333f;
+        }
+        //제거카운터가 0이 아닌 상태에 house오브젝트와 충돌한다면
+        if (collision.name == "house" && delCount != 0)
+        {//제거못한 버섯 안내 Text출력
+            reTurn.text = "제거하지 못한 버섯이 있습니다. 제거해주세요.";  
+            Destroy(reTurn, 3.0f);//3초후 삭제
+        }
+        //house오브젝트에 충돌 시
+        else if (collision.name == "house")
+            SceneManager.LoadScene(1);
+    }
+    // Update is called once per frame
+    void Update()
+    {//Space(점프)키를 누르며,Rigidbody2D Y축이 0일때(점프제한)
+        if (Input.GetKeyDown(KeyCode.Space)&& rb2D.velocity.y == 0)
+        {
+            rb2D.AddForce(transform.up * JumpForce);
+                        //상대좌표(0,1) * 스칼라700  = (0,700) 
+            ani.SetTrigger("JumpTrigger");//점프애니매이션
+        }
+        int key = 0;
+        if (Input.GetKey(KeyCode.RightArrow)) key = 1;//오른쪽버튼
+        if (Input.GetKey(KeyCode.LeftArrow)) key = -1;//왼쪽 버튼
+ 
+        float speedx = Mathf.Abs(rb2D.velocity.x);
+ 
+        if(speedx < maxwalkForce)
+        {
+            rb2D.AddForce(transform.right * key * walkForce);
+        }
+        //오브젝트 반전
+        if(key != 0)
+        {
+            transform.localScale = new Vector3(key * Mathf.Abs(transform.localScale.x),
+                transform.localScale.y, transform.localScale.z);
+        }
+        if (rb2D.velocity.x < 3f)
+            ani.speed = speedx / 2.0f;
+        else
+            ani.speed = 1;
+        //제거카운터가 0이라면
+        if (delCount == 0)
+        {//Clear안내 Text출력
+            nodeletetext.text = "버섯 " + maxdelCount + "개를 모두 제거되었습니다.       집으로 가서 클리어하십시오.";
+            Destroy(shroomtext);
+        }
+    }
+}
