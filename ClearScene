@@ -1,0 +1,28 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
+ 
+ 
+public class ClearScene : MonoBehaviour
+{
+    Text cleartext, touchagain;
+    // Start is called before the first frame update
+    void Start()
+    {
+        cleartext = GameObject.Find("Clear").GetComponent<Text>();
+        touchagain = GameObject.Find("Touchagain").GetComponent<Text>();
+    }
+ 
+    // Update is called once per frame
+    void Update()
+    {
+        cleartext.text = "Game Clear";
+        touchagain.text = "Touch to Game";
+        if (Input.GetMouseButtonDown(0))
+        {
+            SceneManager.LoadScene(0);
+        }
+    }
+}
